@@ -34,15 +34,13 @@ async function startBot() {
       console.log("❌ Conexión cerrada. Reconnect:", shouldReconnect);
 
       if (shouldReconnect) startBot();
-    }
-  });
+    
 
   // ✅ Este es el pairing code:
-  if (!sock.authState.creds.registered) {
-    const phoneNumber = "593985003752"; // <-- AQUI TU NUMERO EN FORMATO INTERNACIONAL SIN +
-    const code = await sock.requestPairingCode(phoneNumber);
-    console.log("📌 PAIRING CODE:", code);
-  }
+    const phoneNumber = process.env.PHONE_NUMBER;
+const code = await sock.requestPairingCode(phoneNumber);
+console.log("📲 PAIRING CODE:", code);
+
 
   // ✅ Respuesta automática simple
   sock.ev.on("messages.upsert", async ({ messages }) => {
