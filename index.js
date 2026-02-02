@@ -1,6 +1,11 @@
-import makeWASocket, { useMultiFileAuthState, DisconnectReason } from "@whiskeysockets/baileys";
+import makeWASocket, {
+  useMultiFileAuthState,
+  DisconnectReason,
+} from "@whiskeysockets/baileys";
+
 import express from "express";
 
+// ✅ Servidor web (Railway necesita puerto)
 const app = express();
 
 app.get("/", (req, res) => {
@@ -8,11 +13,11 @@ app.get("/", (req, res) => {
 });
 
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log("🌐 Web activa en puerto:", PORT));
+app.listen(PORT, () => console.log("✅ Web activa en puerto:", PORT));
 
+// ✅ BOT
 async function startBot() {
-  const { state, saveCreds } = await useMultiFileAuthState("/app/auth");
-
+  const { state, saveCreds } = await useMultiFileAuthState("auth_info");
 
   const sock = makeWASocket({
     auth: state,
@@ -21,30 +26,28 @@ async function startBot() {
 
   sock.ev.on("creds.update", saveCreds);
 
-  sock.ev.on("connection.update", async (update) => {
-    const { connection, lastDisconnect } = update;
-
+  sock.ev.on("connection.update", ({ connection, lastDisconnect }) => {
     if (connection === "close") {
-      const shouldReconnect =
-        lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+      const reason = lastDisconnect?.error?.output?.statusCode;
 
-      console.log("❌ Conexión cerrada. Reconectar:", shouldReconnect);
+      console.log("❌ Conexión cerrada. Razón:", reason);
 
-      if (shouldReconnect) startBot();
+      // reconectar salvo cierre manual
+      if (reason !== DisconnectReason.loggedOut) {
+        console.log("🔄 Reintentando conexión...");
+        startBot();
+      }
     }
 
     if (connection === "open") {
-      console.log("✅ WhatsApp conectado!");
+      console.log("✅ WhatsApp conectado correctamente");
     }
   });
 
-
-  }
-
-  // ✅ Respuesta automática simple
+  // ✅ Responder mensajes
   sock.ev.on("messages.upsert", async ({ messages }) => {
     const msg = messages[0];
-    if (!msg.message) return;
+    if (!msg?.message) return;
 
     const from = msg.key.remoteJid;
     if (from === "status@broadcast") return;
