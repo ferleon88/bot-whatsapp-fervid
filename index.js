@@ -1,53 +1,57 @@
 import express from "express";
-import makeWASocket, { DisconnectReason, useMultiFileAuthState } from "@whiskeysockets/baileys";
-import qrcode from "qrcode-terminal";
+import makeWASocket, { useMultiFileAuthState } from "@whiskeysockets/baileys";
+import qrcode from "qrcode";
 
 const app = express();
 app.use(express.json());
 
+let lastQR = null;
+
+// Ruta principal
 app.get("/", (req, res) => {
-  res.send("✅ Bot WhatsApp Fervid ACTIVO (Railway)");
+  res.send("✅ Bot WhatsApp Fervid activo");
 });
 
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log("✅ Web OK on port " + PORT));
+// Ruta para ver el QR
+app.get("/qr", async (req, res) => {
+  if (!lastQR) {
+    return res.send("❌ Aún no hay QR. Espera unos segundos y recarga la página.");
+  }
+
+  const qrImage = await qrcode.toDataURL(lastQR);
+  res.send(`
+    <h2>📲 Escanea este QR con WhatsApp</h2>
+    <img src="${qrImage}" />
+    <p>Si expira, recarga la página.</p>
+  `);
+});
 
 async function startBot() {
   const { state, saveCreds } = await useMultiFileAuthState("auth_info");
 
   const sock = makeWASocket({
     auth: state,
-    printQRInTerminal: true
   });
 
   sock.ev.on("creds.update", saveCreds);
 
   sock.ev.on("connection.update", (update) => {
-    const { connection, lastDisconnect, qr } = update;
+    const { connection, qr } = update;
 
     if (qr) {
-      console.log("✅ QR generado, escanéalo con WhatsApp");
-      qrcode.generate(qr, { small: true });
-    }
-
-    if (connection === "close") {
-      const shouldReconnect =
-        (lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut);
-
-      console.log("❌ conexión cerrada. Reconnect:", shouldReconnect);
-
-      if (shouldReconnect) startBot();
+      lastQR = qr;
+      console.log("✅ QR recibido. Abre /qr para escanear.");
     }
 
     if (connection === "open") {
-      console.log("🔥 BOT CONECTADO A WHATSAPP ✅");
+      lastQR = null;
+      console.log("✅ WhatsApp conectado correctamente!");
     }
   });
 
   sock.ev.on("messages.upsert", async ({ messages }) => {
-    const msg = messages[0];
-    if (!msg.message) return;
-    if (msg.key.fromMe) return;
+    const msg = messages?.[0];
+    if (!msg?.message || msg.key.fromMe) return;
 
     const from = msg.key.remoteJid;
     const text =
@@ -55,13 +59,14 @@ async function startBot() {
       msg.message.extendedTextMessage?.text ||
       "";
 
-    if (!text) return;
+    console.log("📩 Mensaje:", from, text);
 
-    // Respuesta automática (puedes cambiarla)
-    await sock.sendMessage(from, {
-      text: `✅ Taller Fervid: Recibido tu mensaje: "${text}"\n\n📌 Escríbenos para cotizar puertas de seguridad y estructuras metálicas.`
-    });
+    await sock.sendMessage(from, { text: `✅ Fervid: Recibido tu mensaje: "${text}"` });
   });
 }
 
 startBot();
+
+// Puerto Railway
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => console.log("🌐 Web activa en puerto:", PORT));
