@@ -38,11 +38,7 @@ async function startBot() {
     }
   });
 
-  // ✅ Pairing code (WhatsApp Business sirve igual)
-  if (!sock.authState.creds.registered) {
-    const phoneNumber = process.env.PHONE_NUMBER;
-    const code = await sock.requestPairingCode(phoneNumber);
-    console.log("🔑 PAIRING CODE:", code);
+
   }
 
   // ✅ Respuesta automática simple
