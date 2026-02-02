@@ -2,20 +2,20 @@ import makeWASocket, { useMultiFileAuthState, DisconnectReason } from "@whiskeys
 import express from "express";
 
 const app = express();
-app.use(express.json());
 
 app.get("/", (req, res) => {
   res.send("✅ Bot WhatsApp Fervid activo");
 });
 
 const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => console.log("🌐 Web activa en puerto:", PORT));
 
 async function startBot() {
   const { state, saveCreds } = await useMultiFileAuthState("auth_info");
 
   const sock = makeWASocket({
     auth: state,
-    printQRInTerminal: false,
+    printQRInTerminal: true,
   });
 
   sock.ev.on("creds.update", saveCreds);
@@ -23,24 +23,26 @@ async function startBot() {
   sock.ev.on("connection.update", async (update) => {
     const { connection, lastDisconnect } = update;
 
-    if (connection === "open") {
-      console.log("✅ WhatsApp conectado!");
-    }
-
     if (connection === "close") {
       const shouldReconnect =
         lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
 
-      console.log("❌ Conexión cerrada. Reconnect:", shouldReconnect);
+      console.log("❌ Conexión cerrada. Reconectar:", shouldReconnect);
 
       if (shouldReconnect) startBot();
-    
+    }
 
-  // ✅ Este es el pairing code:
+    if (connection === "open") {
+      console.log("✅ WhatsApp conectado!");
+    }
+  });
+
+  // ✅ Pairing code (WhatsApp Business sirve igual)
+  if (!sock.authState.creds.registered) {
     const phoneNumber = process.env.PHONE_NUMBER;
-const code = await sock.requestPairingCode(phoneNumber);
-console.log("📲 PAIRING CODE:", code);
-
+    const code = await sock.requestPairingCode(phoneNumber);
+    console.log("🔑 PAIRING CODE:", code);
+  }
 
   // ✅ Respuesta automática simple
   sock.ev.on("messages.upsert", async ({ messages }) => {
@@ -50,10 +52,10 @@ console.log("📲 PAIRING CODE:", code);
     const from = msg.key.remoteJid;
     if (from === "status@broadcast") return;
 
-    await sock.sendMessage(from, { text: "✅ Hola! Soy el Bot de Taller Fervid. ¿En qué puedo ayudarte?" });
+    await sock.sendMessage(from, {
+      text: "👋 Hola! Soy el bot de Taller Fervid. ¿En qué puedo ayudarte?",
+    });
   });
 }
 
 startBot();
-
-app.listen(PORT, () => console.log("🌐 Web activa en puerto:", PORT));
