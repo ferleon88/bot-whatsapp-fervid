@@ -11,7 +11,8 @@ const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log("🌐 Web activa en puerto:", PORT));
 
 async function startBot() {
-  const { state, saveCreds } = await useMultiFileAuthState("auth_info");
+  const { state, saveCreds } = await useMultiFileAuthState("/app/auth");
+
 
   const sock = makeWASocket({
     auth: state,
