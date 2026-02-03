@@ -6,6 +6,8 @@ import makeWASocket, {
 import express from "express";
 import qrcode from "qrcode-terminal";
 
+
+
 const app = express();
 
 app.get("/", (req, res) => {
