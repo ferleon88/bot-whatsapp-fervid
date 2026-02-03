@@ -39,12 +39,8 @@ sock.ev.on("connection.update", (update) => {
     console.log("✅ WhatsApp conectado correctamente (QR).");
   }
 });
-
- 
-  }
-}
-
   sock.ev.on("messages.upsert", async ({ messages }) => {
+
     const msg = messages[0];
     if (!msg.message) return;
 
