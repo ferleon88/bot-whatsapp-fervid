@@ -33,7 +33,7 @@ sock.ev.on("connection.update", (update) => {
   if (qr) {
     console.log("✅ ESCANEA ESTE QR CON WHATSAPP BUSINESS:");
 global.latestQR = qr;
-console.log(qr);
+qrcode.generate(qr,{ small: true});
   }
 
   if (connection === "open") {
