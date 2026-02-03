@@ -4,6 +4,7 @@ import makeWASocket, {
   fetchLatestBaileysVersion
 } from "@whiskeysockets/baileys";
 import express from "express";
+import qrcode from "qrcode-terminal";
 
 const app = express();
 
