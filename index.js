@@ -26,18 +26,23 @@ async function startBot() {
 
   sock.ev.on("creds.update", saveCreds);
 
-  // ✅ Si aún no está vinculado, pide pairing code
-  if (!sock.authState.creds.registered) {
-    const phoneNumber = process.env.PHONE_NUMBER;
+// ✅ QR para vincular WhatsApp Business (Railway)
+sock.ev.on("connection.update", (update) => {
+  const { connection, qr } = update;
 
-    if (!phoneNumber) {
-      console.log("❌ Falta PHONE_NUMBER en variables de Railway");
-      process.exit(1);
-    }
-
-    const code = await sock.requestPairingCode(phoneNumber);
-    console.log("🔑 PAIRING CODE:", code);
+  if (qr) {
+    console.log("✅ ESCANEA ESTE QR CON WHATSAPP BUSINESS:");
+    console.log(qr);
   }
+
+  if (connection === "open") {
+    console.log("✅ WhatsApp conectado correctamente (QR).");
+  }
+});
+
+ 
+  }
+}
 
   sock.ev.on("messages.upsert", async ({ messages }) => {
     const msg = messages[0];
