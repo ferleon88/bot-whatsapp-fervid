@@ -1,7 +1,7 @@
 import makeWASocket, {
   useMultiFileAuthState,
   DisconnectReason,
-  fetchLatestBaileysVersion,
+  fetchLatestBaileysVersion
 } from "@whiskeysockets/baileys";
 import express from "express";
 
@@ -12,7 +12,7 @@ app.get("/", (req, res) => {
 });
 
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log("✅ Web activa en puerto:", PORT));
+app.listen(PORT, () => console.log("🌐 Web activa en puerto:", PORT));
 
 async function startBot() {
   const { state, saveCreds } = await useMultiFileAuthState("auth_info");
@@ -21,60 +21,37 @@ async function startBot() {
 
   const sock = makeWASocket({
     version,
-    auth: state,
-    printQRInTerminal: false,
+    auth: state
   });
 
   sock.ev.on("creds.update", saveCreds);
 
-  sock.ev.on("connection.update", async (update) => {
-    const { connection, lastDisconnect, isNewLogin } = update;
+  // ✅ Si aún no está vinculado, pide pairing code
+  if (!sock.authState.creds.registered) {
+    const phoneNumber = process.env.PHONE_NUMBER;
 
-    if (connection === "open") {
-      console.log("✅ WhatsApp conectado y listo!");
+    if (!phoneNumber) {
+      console.log("❌ Falta PHONE_NUMBER en variables de Railway");
+      process.exit(1);
     }
 
-    if (connection === "close") {
-      const reason = lastDisconnect?.error?.output?.statusCode;
-      console.log("❌ Conexión cerrada. Razón:", reason);
+    const code = await sock.requestPairingCode(phoneNumber);
+    console.log("🔑 PAIRING CODE:", code);
+  }
 
-      const shouldReconnect = reason !== DisconnectReason.loggedOut;
-      if (shouldReconnect) {
-        console.log("🔁 Reintentando conexión...");
-        startBot();
-      }
-    }
-
-    // 🔥 Pairing code solo cuando no está registrado
-    if (!sock.authState.creds.registered) {
-      const phoneNumber = process.env.PHONE_NUMBER;
-
-      if (!phoneNumber) {
-        console.log("❌ Falta PHONE_NUMBER en variables de Railway");
-        return;
-      }
-
-      try {
-        const code = await sock.requestPairingCode(phoneNumber);
-        console.log("📌 PAIRING CODE:", code);
-      } catch (err) {
-        console.log("❌ Error generando pairing code:", err);
-      }
-    }
-  });
-
-  // ✅ responder mensajes
   sock.ev.on("messages.upsert", async ({ messages }) => {
-    const msg = messages?.[0];
-    if (!msg?.message) return;
+    const msg = messages[0];
+    if (!msg.message) return;
 
     const from = msg.key.remoteJid;
     if (from === "status@broadcast") return;
 
     await sock.sendMessage(from, {
-      text: "👋 Hola! Soy el bot de Taller Fervid 🔥\n\n✅ Puertas de seguridad\n✅ Estructuras metálicas\n📍 Cuenca\n\nEscríbeme tu necesidad y te respondo.",
+      text: "👋 Hola! Soy el bot de Taller Fervid. ¿En qué puedo ayudarte?"
     });
   });
+
+  console.log("✅ Bot iniciado y listo.");
 }
 
 startBot();
