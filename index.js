@@ -47,8 +47,12 @@ async function startBot() {
   //✅ Vincular por CÓDIGO (NO QR)
 if (!sock.authState.creds.registered) {
   const phoneNumber = "593985003752";
+
+  await new Promise(resolve => setTimeout(resolve, 3000));
+
   const code = await sock.requestPairingCode(phoneNumber);
   console.log("✅ Pairing Code:", code);
+
 }
 
 
