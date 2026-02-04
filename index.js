@@ -38,8 +38,11 @@ async function startBot() {
   const { version } = await fetchLatestBaileysVersion();
 
   const sock = makeWASocket({
-    version,
-    auth: state
+  version,
+  auth: state,
+  printQRInTerminal: false,
+  browser: ["Chrome", "Windows", "10"]
+
   });
   //✅ Vincular por CÓDIGO (NO QR)
 if (!sock.authState.creds.registered) {
