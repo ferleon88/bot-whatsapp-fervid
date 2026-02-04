@@ -53,20 +53,7 @@ if (!sock.authState.creds.registered) {
 
   sock.ev.on("creds.update", saveCreds);
 
-// ✅ QR para vincular WhatsApp Business (Railway)
-sock.ev.on("connection.update", (update) => {
-  const { connection, qr } = update;
 
-  if (qr) {
-    console.log("✅ ESCANEA ESTE QR CON WHATSAPP BUSINESS:");
-global.latestQR = qr;
-qrcode.generate(qr,{ small: true});
-  }
-
-  if (connection === "open") {
-    console.log("✅ WhatsApp conectado correctamente (QR).");
-  }
-});
   sock.ev.on("messages.upsert", async ({ messages }) => {
 
     const msg = messages[0];
