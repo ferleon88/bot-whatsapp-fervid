@@ -46,7 +46,7 @@ async function startBot() {
   });
   //✅ Vincular por CÓDIGO (NO QR)
 if (!sock.authState.creds.registered) {
-  const phoneNumber = "593985003752";
+  const phoneNumber = "+593985003752";
 
   await new Promise(resolve => setTimeout(resolve, 3000));
 
